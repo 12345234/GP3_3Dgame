@@ -5697,7 +5697,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d77e42fedbda1446b949d1313328934, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
-  _playerCollider: {fileID: 1629131307}
+  _playerCollider: {fileID: 1629131306}
   _enemies:
   - {fileID: 95457532814543463}
   - {fileID: 1376965932}
@@ -20169,6 +20169,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   _moveSpeed: 3
   _rotateSpeed: 0
+  hp: 5
+  invincibleTime: 0.5
+  knockbacksp: 5
 --- !u!65 &1376965933
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -23247,13 +23250,10 @@ PrefabInstance:
       addedObject: {fileID: 1629131303}
     - targetCorrespondingSourceObject: {fileID: 2350652681907635850, guid: 83628a2e699576147adabb30587f44d4, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1629131306}
-    - targetCorrespondingSourceObject: {fileID: 2350652681907635850, guid: 83628a2e699576147adabb30587f44d4, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 1629131305}
     - targetCorrespondingSourceObject: {fileID: 2350652681907635850, guid: 83628a2e699576147adabb30587f44d4, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1629131307}
+      addedObject: {fileID: 1629131306}
   m_SourcePrefab: {fileID: 100100000, guid: 83628a2e699576147adabb30587f44d4, type: 3}
 --- !u!1001 &1565689863
 PrefabInstance:
@@ -24275,14 +24275,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12cf78c101b3f4c4685bc3c6d4194ee3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player
-  sp: 4
-  jp: 8
-  accel: 50
-  rotatesp: 3
-  groundnormaly: 0.7
-  groundDanping: 8
-  airDanping: 4.5
-  animator: {fileID: 1012082714}
+  _speed: 5
+  _jp: 8
+  _rotateSpeed: 5
+  _gravity: 20
+  _fireSpeed: 15
+  _firePrefab: {fileID: 4818970324401746577, guid: 59c516dceb031b64ba6cb9cd59bb41f0, type: 3}
+  _offset: {x: 0, y: 0.9, z: 0.9}
+  _hp: 8
+  _animator: {fileID: 1012082714}
 --- !u!114 &1629131305
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24313,35 +24314,8 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 330585545}
---- !u!54 &1629131306
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1629131301}
-  serializedVersion: 5
-  m_Mass: 1
-  m_LinearDamping: 4
-  m_AngularDamping: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 112
-  m_CollisionDetection: 0
---- !u!136 &1629131307
-CapsuleCollider:
+--- !u!143 &1629131306
+CharacterController:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -24355,14 +24329,16 @@ CapsuleCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
+  serializedVersion: 3
+  m_Height: 1.5
   m_Radius: 0.2
-  m_Height: 1.4
-  m_Direction: 1
-  m_Center: {x: 0, y: 0.7, z: 0}
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0.75, z: 0}
 --- !u!1001 &1630215274
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -29278,6 +29254,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   _moveSpeed: 3
   _rotateSpeed: 0
+  hp: 10
+  invincibleTime: 0.5
+  knockbacksp: 20
 --- !u!65 &2029627178
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -30337,6 +30316,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   _moveSpeed: 3
   _rotateSpeed: 8.88
+  hp: 5
+  invincibleTime: 0.5
+  knockbacksp: 5
 --- !u!1001 &408921624137445394
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -1,78 +1,127 @@
-using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour
 {
-    [SerializeField] private float sp;
-    [SerializeField] private float jp;
-    [SerializeField] private float accel;
-    [SerializeField] private float rotatesp;
-    [SerializeField] float groundnormaly = 0.7f;
-    [SerializeField] float groundDanping = 8.0f;
-    [SerializeField] float airDanping = 0.7f;
+    [SerializeField,Header("移動速度")] private float _speed;
+    [SerializeField,Header("ジャンプ力")] private float _jp;
+    [SerializeField,Header("回転速度")] private float _rotateSpeed;
+    [SerializeField,Header("重力")] private float _gravity;
+    [SerializeField,Header("炎のスピード")] private float _fireSpeed;
+    [SerializeField,Header("炎のエフェクト")] GameObject _firePrefab;
+    [SerializeField, Header("炎の生成位置")] Vector3 _offset;
+    [SerializeField, Header("HP")] int _hp;
 
-    [SerializeField] Animator animator;
+    [SerializeField] Animator _animator;
+    CharacterController _characterController;
+    PlayerInput _playerInput;
 
-    bool isGround = false;
-    Rigidbody rb;
-    PlayerInput playerinput;
-
+    Vector2 _playerVec;
+    Vector3 _velocity;
     private void Awake()
     {
-        rb = GetComponent<Rigidbody>();
-        playerinput = GetComponent<PlayerInput>();
-        rb.sleepThreshold = -1;
+        _characterController = GetComponent<CharacterController>();
+        _playerInput = GetComponent<PlayerInput>();
+    }
+    private void OnEnable()
+    {
+        _playerInput.actions["Move"].performed += OnMove;
+        _playerInput.actions["Move"].canceled += OnMove;
+
+        _playerInput.actions["Jump"].performed +=OnJump;
+
+        _playerInput.actions["Attack"].performed += OnAttack;
+
+
+    }
+    private void OnDisable()
+    {
+        _playerInput.actions["Move"].performed -= OnMove;
+        _playerInput.actions["Move"].canceled -= OnMove;
+
+        _playerInput.actions["Jump"].performed -= OnJump;
+
+        _playerInput.actions["Attack"].performed -= OnAttack;
     }
 
     private void Update()
     {
-        if (playerinput.actions["Jump"].WasPressedThisFrame()&&isGround)
-        {
-            rb.AddForce(new Vector3(0, jp,0) , ForceMode.VelocityChange);
-        }
- 
+        Gravity();
+        Move();
     }
-    void FixedUpdate()
+    private void OnMove(InputAction.CallbackContext context)
     {
-        if (isGround)
-        {
-            rb.linearDamping = groundDanping;
-        }
-        else
-        {
-            rb.linearDamping = airDanping;
-        }
-        isGround = false;
-        Vector2 accelvec = playerinput.actions["Move"].ReadValue<Vector2>();
+        _playerVec =context.ReadValue<Vector2>();
+    }
 
-        var cameraforward = playerinput.camera.transform.forward;
+    private void OnJump(InputAction.CallbackContext context)
+    {
+        if (!context.performed) return;
+
+        if(_characterController.isGrounded)
+        {
+            _velocity.y = _jp;
+        }
+    }
+
+    private void OnAttack(InputAction.CallbackContext context)
+    {
+        if (!context.performed) return;
+
+        Vector3 position = transform.position + transform.TransformVector(_offset);
+        var fireObj = Object.Instantiate(_firePrefab, position, Quaternion.identity);
+        var fireRB = fireObj.GetComponent<Rigidbody>();
+
+        if (fireRB != null)
+        {
+            fireRB.linearVelocity = transform.forward * _fireSpeed;
+        }
+    }
+
+    private void Move()
+    {
+        Vector3 cameraforward = _playerInput.camera.transform.forward;
         cameraforward.y = 0;
         cameraforward = cameraforward.normalized;
-        var cameraright = playerinput.camera.transform.right;
+        Vector3 cameraright = _playerInput.camera.transform.right;
 
-        Vector3 direction = accelvec.x * cameraright*accel + accelvec.y * cameraforward*accel;
-
-        rb.AddForce (direction, ForceMode.Acceleration);
+        Vector3 direction = _playerVec.x * cameraright * _speed + _playerVec.y * cameraforward * _speed;
+        _characterController.Move(direction * Time.deltaTime);
 
         Vector3 forward = transform.forward;
 
         transform.up = Vector3.up;
-        transform.forward = Vector3.Slerp(forward, direction, rotatesp*Time.fixedDeltaTime);
+        transform.forward = Vector3.Slerp(forward, direction, _rotateSpeed * Time.fixedDeltaTime);
 
-        Vector3 velocityXZ = rb.linearVelocity;
+        Vector3 velocityXZ = _playerVec;
         velocityXZ.y = 0;
-        animator.SetFloat("MoveSpeed",velocityXZ.magnitude);
+        _animator.SetFloat("MoveSpeed", _playerVec.magnitude);
     }
 
-    private void OnCollisionStay(Collision collision)
+    private void Gravity()
     {
-        foreach(var contact in collision.contacts)
+        if(_characterController.isGrounded && _velocity.y <0)
         {
-           if(contact.normal.y>=groundnormaly)
+            _velocity.y = -2f;
+        }
+
+        _velocity.y -= _gravity * Time.deltaTime;
+        _characterController.Move(_velocity*Time.deltaTime);
+    }
+
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        var attackObj = hit.gameObject.GetComponent<AttackObject>();
+
+        if(attackObj != null)
+        {
+            _hp -= attackObj.power;
+            if(_hp <= 0)
             {
-                isGround = true;
+                Destroy(gameObject);
             }
         }
+
+
     }
 }
