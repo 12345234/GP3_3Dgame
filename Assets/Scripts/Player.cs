@@ -8,37 +8,42 @@ public class Player : MonoBehaviour
     [SerializeField] private float jp;
     [SerializeField] private float accel;
     [SerializeField] private float rotatesp;
+    [SerializeField] float groundnormaly = 0.7f;
+    [SerializeField] float groundDanping = 8.0f;
+    [SerializeField] float airDanping = 0.7f;
 
     [SerializeField] Animator animator;
 
-
+    bool isGround = false;
     Rigidbody rb;
     PlayerInput playerinput;
-    Vector3 accelvecrotate;
-
-    [SerializeField] LayerMask mask;
-
-    RaycastHit hit;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         playerinput = GetComponent<PlayerInput>();
+        rb.sleepThreshold = -1;
     }
 
     private void Update()
     {
-        if (playerinput.actions["Jump"].WasPressedThisFrame()&&MapCheck())
+        if (playerinput.actions["Jump"].WasPressedThisFrame()&&isGround)
         {
             rb.AddForce(new Vector3(0, jp,0) , ForceMode.VelocityChange);
         }
-
-        Debug.DrawRay(transform.position, Vector3.down,Color.red ,0.3f);
-
-        
+ 
     }
     void FixedUpdate()
     {
+        if (isGround)
+        {
+            rb.linearDamping = groundDanping;
+        }
+        else
+        {
+            rb.linearDamping = airDanping;
+        }
+        isGround = false;
         Vector2 accelvec = playerinput.actions["Move"].ReadValue<Vector2>();
 
         var cameraforward = playerinput.camera.transform.forward;
@@ -50,10 +55,6 @@ public class Player : MonoBehaviour
 
         rb.AddForce (direction, ForceMode.Acceleration);
 
-        if(direction!=Vector3.zero)
-        {
-            accelvecrotate = direction.normalized;
-        }
         Vector3 forward = transform.forward;
 
         transform.up = Vector3.up;
@@ -64,13 +65,14 @@ public class Player : MonoBehaviour
         animator.SetFloat("MoveSpeed",velocityXZ.magnitude);
     }
 
-    bool MapCheck()
+    private void OnCollisionStay(Collision collision)
     {
-        if(Physics.Raycast(transform.position,Vector3.down,out hit ,0.1f, mask))
+        foreach(var contact in collision.contacts)
         {
-            return true;
+           if(contact.normal.y>=groundnormaly)
+            {
+                isGround = true;
+            }
         }
-
-        return hit.collider != null;
     }
 }
