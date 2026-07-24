@@ -1,6 +1,9 @@
+using Cysharp.Threading.Tasks;
+using System;
+using System.Threading.Tasks;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-
 public class Player : MonoBehaviour
 {
     [SerializeField,Header("移動速度")] private float _speed;
@@ -11,7 +14,8 @@ public class Player : MonoBehaviour
     [SerializeField,Header("炎のエフェクト")] GameObject _firePrefab;
     [SerializeField, Header("炎の生成位置")] Vector3 _offset;
     [SerializeField, Header("HP")] int _hp;
-
+    [SerializeField] float _knockbackSpeed = 10;
+    [SerializeField] TextMeshProUGUI _goalText;
     [SerializeField] Animator _animator;
     CharacterController _characterController;
     PlayerInput _playerInput;
@@ -48,6 +52,7 @@ public class Player : MonoBehaviour
     {
         Gravity();
         Move();
+
     }
     private void OnMove(InputAction.CallbackContext context)
     {
@@ -69,7 +74,7 @@ public class Player : MonoBehaviour
         if (!context.performed) return;
 
         Vector3 position = transform.position + transform.TransformVector(_offset);
-        var fireObj = Object.Instantiate(_firePrefab, position, Quaternion.identity);
+        var fireObj = Instantiate(_firePrefab, position, Quaternion.identity);
         var fireRB = fireObj.GetComponent<Rigidbody>();
 
         if (fireRB != null)
@@ -93,9 +98,7 @@ public class Player : MonoBehaviour
         transform.up = Vector3.up;
         transform.forward = Vector3.Slerp(forward, direction, _rotateSpeed * Time.fixedDeltaTime);
 
-        Vector3 velocityXZ = _playerVec;
-        velocityXZ.y = 0;
-        _animator.SetFloat("MoveSpeed", _playerVec.magnitude);
+        _animator.SetFloat("MoveSpeed",_playerVec.magnitude);
     }
 
     private void Gravity()
@@ -105,23 +108,34 @@ public class Player : MonoBehaviour
             _velocity.y = -2f;
         }
 
-        _velocity.y -= _gravity * Time.deltaTime;
+        _velocity.y+= _gravity * Time.deltaTime;
         _characterController.Move(_velocity*Time.deltaTime);
     }
 
-    private void OnControllerColliderHit(ControllerColliderHit hit)
+    private async void OnControllerColliderHit(ControllerColliderHit hit)
     {
         var attackObj = hit.gameObject.GetComponent<AttackObject>();
 
-        if(attackObj != null)
+        if(attackObj != null&&hit.gameObject.CompareTag("Enemy"))
         {
             _hp -= attackObj.power;
             if(_hp <= 0)
             {
                 Destroy(gameObject);
             }
+            Vector3 knockVec = Vector3.zero;
+            Vector3 backpos = transform.position - transform.forward * 0.5f;
+            knockVec = Vector3.Lerp(transform.position,backpos,_knockbackSpeed);
+            knockVec.y = 0;
+
+            transform.position += knockVec.normalized;
         }
 
-
+        if (hit.gameObject.name == "Goal")
+        {
+            //時間表示
+            await UniTask.Delay(TimeSpan.FromSeconds(3));
+            _goalText.text = "Goal";
+        }
     }
 }
